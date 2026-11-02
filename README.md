@@ -38,3 +38,12 @@ Một công cụ nội bộ gọn nhẹ thay thế việc gom order cơm qua cha
    uvicorn app.main:app --reload
    ```
 4. Truy cập tài liệu API Swagger UI tại: `http://localhost:8000/docs`
+
+## 4. Danh sách API Endpoints chính
+- `POST /api/sessions/`: Tạo event đặt cơm mới và sinh mã share_code
+- `GET /api/sessions/{share_code}`: Lấy chi tiết event và danh sách món
+- `POST /api/sessions/{session_id}/close`: Đóng đặt hàng & tự sinh tin nhắn gửi quán
+- `POST /api/sessions/{session_id}/pricing`: Nhập giá từng phần cơm
+- `POST /api/orders/`: Đặt phần cơm mới (+1, +2 món, ghi chú riêng)
+- `POST /api/orders/{order_id}/transfer`: Báo đã chuyển khoản
+- `POST /api/orders/{order_id}/confirm`: Xác nhận nhận tiền
