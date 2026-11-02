@@ -1,0 +1,19 @@
+# Môi trường ảo Python
+venv/
+.venv/
+env/
+__pycache__/
+*.pyc
+
+# BẢO MẬT: Tuyệt đối không push file chứa key/mật khẩu lên GitHub
+.env
+*.env.local
+
+# Node / Frontend (cho phần sau)
+node_modules/
+dist/
+.DS_Store
+
+# IDE & Editor
+.vscode/
+.idea/
