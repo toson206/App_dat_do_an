@@ -1,16 +1,15 @@
 import os
 from pydantic_settings import BaseSettings
-from dotenv import load_dotenv
-
-load_dotenv()
 
 class Settings(BaseSettings):
-    SUPABASE_URL: str = os.getenv("SUPABASE_URL", "")
-    SUPABASE_KEY: str = os.getenv("SUPABASE_KEY", "")
-    PORT: int = int(os.getenv("PORT", "8000"))
-    HOST: str = os.getenv("HOST", "0.0.0.0")
+    DATABASE_URL: str = "postgresql://postgres:postgres@localhost:5432/App"
+    PORT: int = 8000
+    HOST: str = "0.0.0.0"
+    UPLOAD_DIR: str = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "uploads")
+    BASE_URL: str = "http://localhost:8000"
 
     class Config:
         env_file = ".env"
+        extra = "ignore"
 
 settings = Settings()

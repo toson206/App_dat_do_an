@@ -1,14 +1,22 @@
-from supabase import create_client, Client
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 from app.config import settings
+from app.models import Base
 
-def get_supabase_client() -> Client:
-    if not settings.SUPABASE_URL or not settings.SUPABASE_KEY:
-        raise ValueError("Chưa cấu hình SUPABASE_URL hoặc SUPABASE_KEY trong file .env!")
-    return create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
+# Tạo engine kết nối PostgreSQL
+engine = create_engine(
+    settings.DATABASE_URL,
+    pool_pre_ping=True,
+    echo=False
+)
 
-# Khởi tạo client dùng chung
-try:
-    supabase: Client = get_supabase_client()
-except Exception as e:
-    print(f"Cảnh báo Supabase: {e}")
-    supabase = None
+# Khởi tạo Session factory
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+def get_db():
+    """Dependency cung cấp session database cho từng request"""
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
