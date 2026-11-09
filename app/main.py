@@ -5,14 +5,10 @@ from fastapi.staticfiles import StaticFiles
 from app.config import settings
 from app.database import engine
 from app.models import Base
-from app.routers import sessions, orders, upload, users
+from app.routers import sessions, orders, upload, users, restaurants
 
-# Đảm bảo bảng tồn tại (nếu chưa tạo) và thư mục uploads sẵn sàng
+# Đảm bảo thư mục uploads luôn sẵn sàng
 os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
-try:
-    Base.metadata.create_all(bind=engine)
-except Exception as e:
-    print(f"Lưu ý kết nối DB: {e}")
 
 app = FastAPI(
     title="Cơm Trưa - API Đặt cơm nội bộ",
@@ -36,6 +32,7 @@ app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads"
 app.include_router(sessions.router)
 app.include_router(orders.router)
 app.include_router(users.router)
+app.include_router(restaurants.router)
 app.include_router(upload.router)
 
 @app.get("/", tags=["Hệ thống"])

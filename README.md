@@ -1,60 +1,99 @@
-# Cơm Trưa - Ứng dụng đặt cơm nội bộ
+# Cơm Trưa - Ứng dụng đặt cơm nội bộ (Backend API)
 
-Một công cụ nội bộ gọn nhẹ thay thế việc gom order cơm qua chat nhóm và ghi tay Excel.
+Hệ thống Backend RESTful API cho ứng dụng đặt cơm văn phòng nội bộ, thay thế hoàn toàn việc gom order qua chat nhóm và ghi tay Excel.
 
 ## 1. Kiến trúc hệ thống
-- **Cơ sở dữ liệu**: **PostgreSQL Local** (quản lý trực tiếp qua **pgAdmin 4** với database `App`).
-- **Backend**: Python (**FastAPI + SQLAlchemy**) xử lý API gom đơn, tính tiền, thuật toán tổng hợp tin nhắn gửi quán cơm và lưu ảnh local.
-- **Frontend**: React (Vite + Tailwind CSS + Lucide Icons) tối ưu giao diện Mobile-first.
+- **Ngôn ngữ & Framework**: Python (**FastAPI** + **SQLAlchemy 2.0**)
+- **Cơ sở dữ liệu**: **PostgreSQL 16** (mặc định database `dx_order`, quản lý qua **pgAdmin 4**).
+- **Quản lý Migrations**: **Alembic** đánh version tuần tự (`0001`, `0002`...).
+- **Đóng gói**: **Docker & Docker Compose** (Container prefix: `dx-order-*`).
 
-## 2. Cấu trúc thư mục
+## 2. Cấu trúc thư mục dự án
 ```
-├── backend/                  # Source code Backend FastAPI
-│   ├── app/
-│   │   ├── models.py         # SQLAlchemy Models (6 bảng chuẩn pgAdmin)
-│   │   ├── routers/          # API Sessions, Orders, Users, Upload
-│   │   ├── services/         # Thuật toán tổng hợp tin nhắn gửi quán
-│   │   ├── database.py       # Kết nối PostgreSQL Local
-│   │   ├── schemas.py        # Pydantic Schemas
-│   │   ├── config.py         # Cấu hình môi trường
-│   │   └── main.py           # Điểm khởi chạy FastAPI
-│   ├── schema.sql            # File DDL tạo bảng cho PostgreSQL / pgAdmin 4
-│   ├── test_generator.py     # Script test thuật toán ghép món
-│   ├── requirements.txt      # Thư viện phụ thuộc
-│   └── .env.example          # Mẫu cấu hình môi trường
-├── PROJECT_STATUS.md         # Báo cáo tiến độ chi tiết của dự án
+├── alembic/                  # Thư mục quản lý migrations
+│   ├── versions/             # Các bản migration versioned (0001_initial_schema.py...)
+│   └── env.py                # Cấu hình môi trường Alembic động theo .env
+├── alembic.ini               # Cấu hình Alembic (template: %(rev)s_%(slug)s)
+├── app/                      # Mã nguồn chính của ứng dụng
+│   ├── models.py             # SQLAlchemy Models
+│   ├── schemas/              # Thư mục Pydantic Schemas theo từng domain
+│   │   ├── __init__.py
+│   │   ├── user.py
+│   │   ├── session.py
+│   │   ├── order.py
+│   │   ├── menu_item.py
+│   │   └── restaurant.py
+│   ├── routers/              # API Sessions, Orders, Users, Upload
+│   ├── services/             # Thuật toán tổng hợp tin nhắn gửi quán
+│   ├── database.py           # Kết nối PostgreSQL
+│   ├── config.py             # Cấu hình môi trường Settings (Pydantic)
+│   ├── dependencies.py       # Dependency xác định danh tính (X-User-Id)
+│   └── main.py               # Điểm khởi chạy FastAPI
+├── Dockerfile                # Build container ứng dụng backend
+├── docker-compose.yml        # Docker Compose chuẩn (Postgres, pgAdmin, Backend)
+├── docker-compose.dev.yml    # Docker Compose phục vụ môi trường phát triển (Dev)
+├── .dockerignore             # Bỏ qua file rác khi build Docker
+├── .env                      # File cấu hình môi trường thực thi (không commit)
+├── .env.example              # Mẫu cấu hình môi trường (nội dung chuẩn sẵn dùng)
+├── requirements.txt          # Thư viện phụ thuộc (FastAPI, Alembic, SQLAlchemy...)
+├── test_generator.py         # Script test thuật toán ghép món
+├── start.bat                 # Script chạy nhanh 1-click cho Windows
+├── stop.bat                  # Script dừng nhanh 1-click cho Windows
 └── README.md
 ```
 
 ## 3. Hướng dẫn chạy Backend (Local)
-1. Mở pgAdmin 4, đảm bảo database `App` đã sẵn sàng (đã chạy file `backend/schema.sql` nếu cần tạo mới).
-2. Mở terminal tại thư mục `backend`:
+1. Cài đặt dependencies:
    ```bash
-   cd backend
    pip install -r requirements.txt
    ```
-3. Cấu hình file `.env` từ `.env.example`:
-   ```env
-   DATABASE_URL=postgresql://postgres:mat_khau_cua_ban@localhost:5432/App
+2. Khởi tạo file `.env` từ file mẫu:
+   ```bash
+   cp .env.example .env
+   ```
+   *(File `.env.example` đã có sẵn đầy đủ cấu hình mặc định giống `.env`, có thể dùng ngay)*
+3. Chạy migration để tự động tạo/cập nhật bảng trong PostgreSQL:
+   ```bash
+   alembic upgrade head
    ```
 4. Khởi chạy server FastAPI:
    ```bash
    uvicorn app.main:app --reload
    ```
-5. Truy cập tài liệu API Swagger UI tại: `http://localhost:8000/docs`
+5. Truy cập Swagger UI tại: `http://localhost:8000/docs`
 
-## 4. Hướng dẫn chạy thử nghiệm trên Docker
-1. Khởi động **Docker Desktop** trên máy.
-2. **Cách 1 (Nhanh nhất trên Windows):** Click đúp vào file `start.bat` ở thư mục gốc để tự động bật hệ thống và mở trình duyệt.
-   - Khi muốn tắt: Click đúp vào file `stop.bat`.
-3. **Cách 2 (Bằng dòng lệnh):**
-   ```bash
-   docker-compose up --build -d
-   ```
-3. Truy cập các dịch vụ:
-   - **FastAPI Swagger Docs**: http://localhost:8000/docs
-   - **pgAdmin 4**: http://localhost:5050 (Email: `admin@admin.com`, Pass: `admin`)
-4. Dừng hệ thống:
-   ```bash
-   docker-compose down
-   ```
+## 4. Quản lý Migrations với Alembic
+- **Tạo migration mới sau khi sửa models**:
+  ```bash
+  alembic revision --autogenerate -m "mo_ta_thay_doi"
+  ```
+- **Áp dụng migration lên DB**:
+  ```bash
+  alembic upgrade head
+  ```
+- **Rollback 1 bản migration**:
+  ```bash
+  alembic downgrade -1
+  ```
+
+## 5. Hướng dẫn chạy trên Docker
+
+### Cách 1: Chạy với Docker Compose mặc định
+```bash
+docker compose up --build -d
+```
+
+### Cách 2: Chạy với Docker Compose môi trường Dev (`docker-compose.dev.yml`)
+```bash
+docker compose -f docker-compose.dev.yml up --build -d
+```
+
+*(Container backend sẽ tự động chạy `alembic upgrade head` khi kết nối DB thành công)*
+
+### Tắt các container:
+- Nếu dùng file mặc định: `docker compose down`
+- Nếu dùng file dev: `docker compose -f docker-compose.dev.yml down`
+
+### Truy cập dịch vụ:
+- **FastAPI Swagger Docs**: http://localhost:8000/docs
+- **pgAdmin 4**: http://localhost:5050 (Email & Password trong `.env`)

@@ -9,6 +9,13 @@ __pycache__/
 .env
 *.env.local
 
+# Docker local config
+docker-compose.yml
+docker-compose.override.yml
+
+# Thư mục media tải lên cục bộ
+uploads/
+
 # Node / Frontend (cho phần sau)
 node_modules/
 dist/

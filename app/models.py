@@ -16,6 +16,10 @@ class User(Base):
     department = Column(String(100), nullable=True)
     food_note = Column(Text, nullable=True)        # Ghi chú ăn uống: dị ứng, ăn chay...
     favorite_food = Column(Text, nullable=True)
+    bank_name = Column(String(100), nullable=True)
+    bank_account_number = Column(String(50), nullable=True)
+    bank_account_name = Column(String(150), nullable=True)
+    qr_image_url = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     sessions_created = relationship("Session", back_populates="creator", foreign_keys="Session.created_by")
@@ -48,6 +52,7 @@ class Session(Base):
     deadline = Column(DateTime(timezone=True), nullable=False)
     status = Column(String(30), default="OPEN")  # OPEN, CLOSED, WAITING_PAYMENT, COMPLETED
     event_note = Column(Text, nullable=True)
+    pricing_note = Column(Text, nullable=True)  # Ghi chú tính tiền của Host (voucher, phí ship...)
     bank_name = Column(String(100), nullable=True)
     bank_account_number = Column(String(50), nullable=True)
     bank_account_name = Column(String(150), nullable=True)
@@ -58,8 +63,13 @@ class Session(Base):
 
     restaurant = relationship("Restaurant", back_populates="sessions")
     creator = relationship("User", foreign_keys=[created_by], back_populates="sessions_created")
+    source_session = relationship("Session", remote_side=[id], foreign_keys=[cloned_from_session_id], backref="cloned_sessions")
     menu_items = relationship("MenuItem", back_populates="session", cascade="all, delete-orphan", order_by="MenuItem.display_order")
     orders = relationship("Order", back_populates="session", cascade="all, delete-orphan")
+
+    @property
+    def cloned_from_title(self):
+        return self.source_session.title if self.source_session else None
 
 
 class MenuItem(Base):
